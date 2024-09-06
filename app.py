@@ -6,6 +6,7 @@
 # flask db init 
 # flask db migrate -m "Migração Inicial" 
 # flask db upgrade
+# flask run --debug
 
 from flask import Flask, render_template, request, flash, redirect
 app = Flask(__name__)
@@ -47,6 +48,7 @@ def dados():
 @app.route('/usuario')
 def usuario():
     u = Usuario.query.all()
+    print(u)
     return render_template('usuario_lista.html', dados=u)
 
 @app.route('/usuario/add')
@@ -67,6 +69,41 @@ def usuario_save():
     else:
         flash('Preencha todos os campos')
         return redirect('/usuario/add')
+
+@app.route('/usuario/remove/<int:id>')
+def usuario_remove(id):
+    if id > 0:
+        usuario = Usuario.query.get(id)
+        db.session.delete(usuario)
+        db.session.commit()
+        flash('Usuário removido com sucesso!!!')
+        return redirect('/usuario')
+    else:
+        flash('Caminho Incorreto!')
+        return redirect('/usuario')
+    
+@app.route('/usuario/edita/<int:id>')
+def usuario_edita(id):
+    usuario = Usuario.query.get(id)
+    return render_template("usuario_edita.html", dados = usuario)
+
+@app.route('/usuario/edita/save', methods=['POST'])
+def usuario_edita_save():
+    nome = request.form.get('nome')
+    email = request.form.get('email')
+    idade = request.form.get('idade')
+    id = request.form.get('id')
+    if id and nome and email and idade:
+        usuario = Usuario.query.get(id)
+        usuario.nome = nome
+        usuario.email = email
+        usuario.idade = idade
+        db.session.commit()
+        flash('Dados atualizados com sucesso!')
+        return redirect('/usuario')
+    else:
+        flash('Faltando dados!!')
+        return redirect('/usuario')
 
 if __name__ == '__main__':
     app.run()
